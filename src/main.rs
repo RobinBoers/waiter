@@ -1,5 +1,8 @@
 use std::{fs::File, path::Path};
-use rouille::Response;
+use rouille::{Response, Request};
+
+const CACHE_TIME_ASSETS: u64 = 31536000;
+const CACHE_TIME_CONTENT: u64 = 43200;
 
 fn main() {
     let address = "localhost:4000";
@@ -24,7 +27,7 @@ fn main() {
     });
 }
 
-fn serve_index() -> rouille::Response {
+fn serve_index() -> Response {
     match find_index() {
         Some((filename, mime_type)) => serve_file(filename, mime_type),
         None => serve_404()
@@ -45,25 +48,25 @@ fn find_index() -> Option<(String, String)> {
         .cloned()
 }
 
-fn serve_file(filename: String, mime_type: String) -> rouille::Response {
+fn serve_file(filename: String, mime_type: String) -> Response {
     let file = File::open(filename).unwrap();
     Response::from_file(mime_type, file)
 }
 
-fn serve_404() -> rouille::Response {
+fn serve_404() -> Response {
     Response::text("Resource was not found on this server").with_status_code(404)
 }
 
-fn set_cache_time(response: rouille::Response, request_url: String) -> rouille::Response {
+fn set_cache_time(response: Response, request_url: String) -> Response {
     let cache_time_in_seconds = get_cache_time_for_filetype(request_url);
     response.with_public_cache(cache_time_in_seconds)
 }
 
 fn get_cache_time_for_filetype(filename: String) -> u64 {
     if is_static_asset(filename) {
-        31536000 // One year
+        CACHE_TIME_ASSETS
     } else {
-        43200 // One day
+        CACHE_TIME_CONTENT
     }
 }
 
@@ -78,8 +81,8 @@ fn is_static_asset(filename: String) -> bool {
 }
 
 fn set_correct_mime_type(
-    response: rouille::Response,
-    request: &rouille::Request,
+    response: Response,
+    request: &Request,
 ) -> rouille::Response {
     if is_htmd_file(&response, request) {
         if accepts_htmd_mime_type(request) {
@@ -92,11 +95,11 @@ fn set_correct_mime_type(
     }
 }
 
-fn is_htmd_file(response: &rouille::Response, request: &rouille::Request) -> bool {
+fn is_htmd_file(response: &Response, request: &Request) -> bool {
     request.url().ends_with(".htmd") || current_response_has_htmd_content_type(response)
 }
 
-fn current_response_has_htmd_content_type(response: &rouille::Response) -> bool {
+fn current_response_has_htmd_content_type(response: &Response) -> bool {
     let content_type = response.headers
             .iter()
             .find(|&&(ref k, _)| k.eq_ignore_ascii_case("Content-Type"))
@@ -106,11 +109,11 @@ fn current_response_has_htmd_content_type(response: &rouille::Response) -> bool 
     content_type.contains("text/htmd")
 }
 
-fn accepts_htmd_mime_type(request: &rouille::Request) -> bool {
+fn accepts_htmd_mime_type(request: &Request) -> bool {
     let accept_header = request.header("Accept").unwrap_or("*/*");
     accept_header.contains("text/htmd")
 }
 
-fn set_server_header(response: rouille::Response) -> rouille::Response {
+fn set_server_header(response: Response) -> Response {
     response.with_unique_header("Server", "waiter (Rust)")
 }
