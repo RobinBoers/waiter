@@ -1,6 +1,10 @@
 use std::{fs::File, path::Path};
 use rouille::{Response, Request};
 
+const SERVER_NAME: &str = "0bx11/waiter (Rust)";
+const CONTENT_LANGUAGE: &str = "en-US";
+const CONTENT_CHARSET: &str = "UTF-8";
+
 const CACHE_TIME_ASSETS: u64 = 31536000;
 const CACHE_TIME_CONTENT: u64 = 43200;
 
@@ -9,9 +13,9 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-   /// Address for the server to run on
-   #[arg(short, long, default_value_t = String::from("localhost:4000"))]
-   address: String,
+    /// Address for the server to run on
+    #[arg(short, long, default_value_t = String::from("localhost:4000"))]
+    address: String,
 }
 
 fn main() {
@@ -31,16 +35,16 @@ fn main() {
 
         response = set_cache_time(response, request.url());
         response = set_correct_mime_type(response, request);
-        response = set_server_header(response);
+        response = set_additional_headers(response);
 
-        response
+        rouille::content_encoding::apply(request, response)
     });
 }
 
 fn serve_index() -> Response {
     match find_index() {
         Some((filename, mime_type)) => serve_file(filename, mime_type),
-        None => serve_404()
+        None => serve_404(),
     }
 }
 
@@ -90,18 +94,21 @@ fn is_static_asset(filename: String) -> bool {
         .any(|&suffix| filename.ends_with(suffix))
 }
 
-fn set_correct_mime_type(
-    response: Response,
-    request: &Request,
-) -> rouille::Response {
+fn set_correct_mime_type(response: Response, request: &Request) -> rouille::Response {
     if is_htmd_file(&response, request) {
         if accepts_htmd_mime_type(request) {
-            response.with_unique_header("Content-Type", "text/htmd")
+            response.with_unique_header(
+                "Content-Type",
+                format!("text/htmd; charset={CONTENT_CHARSET}"),
+            )
         } else {
-            response.with_unique_header("Content-Type", "text/plain")
+            response.with_unique_header(
+                "Content-Type",
+                format!("text/plain; charset={CONTENT_CHARSET}"),
+            )
         }
     } else {
-        response
+        append_charset_to_content_type(response)
     }
 }
 
@@ -110,13 +117,17 @@ fn is_htmd_file(response: &Response, request: &Request) -> bool {
 }
 
 fn current_response_has_htmd_content_type(response: &Response) -> bool {
-    let content_type = response.headers
-            .iter()
-            .find(|&&(ref k, _)| k.eq_ignore_ascii_case("Content-Type"))
-            .map(|&(_, ref v)| &v[..])
-            .unwrap();
-
+    let content_type = get_content_type_header(response);
     content_type.contains("text/htmd")
+}
+
+fn get_content_type_header(response: &Response) -> &str {
+    response
+        .headers
+        .iter()
+        .find(|&&(ref k, _)| k.eq_ignore_ascii_case("Content-Type"))
+        .map(|&(_, ref v)| &v[..])
+        .unwrap()
 }
 
 fn accepts_htmd_mime_type(request: &Request) -> bool {
@@ -124,6 +135,19 @@ fn accepts_htmd_mime_type(request: &Request) -> bool {
     accept_header.contains("text/htmd")
 }
 
-fn set_server_header(response: Response) -> Response {
-    response.with_unique_header("Server", "waiter (Rust)")
+fn append_charset_to_content_type(response: Response) -> Response {
+    let content_type_header = get_content_type_header(&response);
+
+    if !content_type_header.contains("charset") {
+        let content_type = format!("{content_type_header}; charset={CONTENT_CHARSET}");
+        response.with_unique_header("Content-Type", content_type)
+    } else {
+        response
+    }
+}
+
+fn set_additional_headers(response: Response) -> Response {
+    response
+        .with_unique_header("Server", SERVER_NAME)
+        .with_unique_header("Content-Language", CONTENT_LANGUAGE)
 }
