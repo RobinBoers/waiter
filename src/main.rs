@@ -4,11 +4,21 @@ use rouille::{Response, Request};
 const CACHE_TIME_ASSETS: u64 = 31536000;
 const CACHE_TIME_CONTENT: u64 = 43200;
 
-fn main() {
-    let address = "localhost:4000";
-    println!("Now listening on {}", address);
+use clap::Parser;
 
-    rouille::start_server(address, move |request| {
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+   /// Address for the server to run on
+   #[arg(short, long, default_value_t = String::from("localhost:4000"))]
+   address: String,
+}
+
+fn main() {
+    let args = Args::parse();
+    println!("Now listening on {}", args.address);
+
+    rouille::start_server(args.address, move |request| {
         let mut response = rouille::match_assets(request, ".");
 
         if !response.is_success() {
