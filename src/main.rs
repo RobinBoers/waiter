@@ -28,6 +28,7 @@ fn main() {
         if !response.is_success() {
             if request.url() == "/" {
                 response = serve_index()
+                // TODO(robin): also support index files in directories
             } else {
                 response = serve_404()
             }
@@ -151,3 +152,4 @@ fn set_additional_headers(response: Response) -> Response {
         .with_unique_header("Server", SERVER_NAME)
         .with_unique_header("Content-Language", CONTENT_LANGUAGE)
 }
+

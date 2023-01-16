@@ -11,7 +11,8 @@ A simple HTTP gridserver built for serving gridsites. It handles caching and mim
 
 Upcoming:
 
-- Supports `PUT` for publishing files (with Basic Auth of course)
+- Supports `PUT` for publishing files (with auth of course)
+- Fancy URLs for `.htmd` files
 
 ## Usage
 
