@@ -1,5 +1,5 @@
 use rouille::{Request, RequestBody, Response};
-use std::{fs, fs::File, io, io::Read, path::Path};
+use std::{fs, fs::File, io::Read, path::Path};
 
 const SERVER_NAME: &str = "0bx11/waiter (Rust)";
 const CONTENT_LANGUAGE: &str = "en-US";
@@ -7,6 +7,9 @@ const CONTENT_CHARSET: &str = "UTF-8";
 
 const CACHE_TIME_ASSETS: u64 = 31536000;
 const CACHE_TIME_CONTENT: u64 = 43200;
+
+const AUTH_USERNAME: &str = "root";
+const AUTH_PASSWORD: &str = "toor";
 
 use clap::Parser;
 
@@ -33,6 +36,26 @@ fn main() {
 }
 
 fn handle_put_request(request: &Request) -> Response {
+    match require_authentication(request) {
+        Ok(request) => process_put_request(request),
+        Err(response) => response,
+    }
+}
+
+fn require_authentication(request: &Request) -> Result<&Request, Response> {
+    let auth = match rouille::input::basic_http_auth(request) {
+        Some(credentials) => credentials,
+        None => return Err(Response::basic_http_auth_login_required("PUT")),
+    };
+
+    if auth.login == AUTH_USERNAME && auth.password == AUTH_PASSWORD {
+        Ok(request)
+    } else {
+        Err(serve(403, "Invalid credentials; authentication is required for `PUT` requests."))
+    }
+}
+
+fn process_put_request(request: &Request) -> Response {
     if request.header("Expect") != Some("100-continue") {
         match request.data() {
             Some(request_body) => upload_file(request_body, request.url()),
@@ -52,7 +75,8 @@ fn upload_file(mut request_body: RequestBody, filepath: String) -> Response {
     match request_body.read_to_string(&mut buffer) {
         Ok(0) => serve(400, "Bad request; empty body, nothing to upload."),
         Ok(_len) => {
-            fs::write(format!(".{filepath}"), buffer).expect("Unable to write file");
+            fs::write(format!(".{filepath}"), buffer)
+                .expect(&format!("Unable to write file {filepath}"));
 
             serve(201, "")
         }

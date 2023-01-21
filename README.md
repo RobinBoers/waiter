@@ -9,10 +9,10 @@ A simple HTTP gridserver built for serving gridsites. It handles caching and mim
 - Stable and fast
 - Easy to use
 - Supports `PUT` for publishing files
+  - Requires auth (HTTP Basic Auth) for `PUT` requests
 
 Upcoming:
 
-- Require auth for `PUT` requests
 - Fancy URLs for `.htmd` files
 
 ## Usage
