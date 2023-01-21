@@ -1,5 +1,5 @@
+use rouille::{Request, Response};
 use std::{fs::File, path::Path};
-use rouille::{Response, Request};
 
 const SERVER_NAME: &str = "0bx11/waiter (Rust)";
 const CONTENT_LANGUAGE: &str = "en-US";
@@ -22,25 +22,35 @@ fn main() {
     let args = Args::parse();
     println!("Now listening on {}", args.address);
 
-    rouille::start_server(args.address, move |request| {
-        let mut response = rouille::match_assets(request, ".");
-
-        if !response.is_success() {
-            let url = request.url();
-
-            if url.ends_with("/") {
-                response = serve_index(url)
-            } else {
-                response = serve_404()
-            }
-        }
-
-        response = set_cache_time(response, request.url());
-        response = set_correct_mime_type(response, request);
-        response = set_additional_headers(response);
-
-        rouille::content_encoding::apply(request, response)
+    rouille::start_server(args.address, move |request| match request.method() {
+        "PUT" => handle_put_request(request),
+        "GET" => handle_get_request(request),
+        _ => serve_400(),
     });
+}
+
+fn handle_put_request(_request: &Request) -> Response {
+    serve_400()
+}
+
+fn handle_get_request(request: &Request) -> Response {
+    let mut response = rouille::match_assets(request, ".");
+
+    if !response.is_success() {
+        let url = request.url();
+
+        if url.ends_with("/") {
+            response = serve_index(url)
+        } else {
+            response = serve_404()
+        }
+    }
+
+    response = set_cache_time(response, request.url());
+    response = set_correct_mime_type(response, request);
+    response = set_additional_headers(response);
+
+    rouille::content_encoding::apply(request, response)
 }
 
 fn serve_index(path: String) -> Response {
@@ -71,6 +81,11 @@ fn serve_file(filename: String, mime_type: String) -> Response {
 
 fn serve_404() -> Response {
     Response::text("Resource was not found on this server").with_status_code(404)
+}
+
+fn serve_400() -> Response {
+    Response::text("Bad request; only `GET` and `PUT` requests are supported.")
+        .with_status_code(400)
 }
 
 fn set_cache_time(response: Response, request_url: String) -> Response {
