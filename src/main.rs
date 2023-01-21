@@ -26,9 +26,10 @@ fn main() {
         let mut response = rouille::match_assets(request, ".");
 
         if !response.is_success() {
-            if request.url() == "/" {
-                response = serve_index()
-                // TODO(robin): also support index files in directories
+            let url = request.url();
+
+            if url.ends_with("/") {
+                response = serve_index(url)
             } else {
                 response = serve_404()
             }
@@ -42,19 +43,19 @@ fn main() {
     });
 }
 
-fn serve_index() -> Response {
-    match find_index() {
+fn serve_index(path: String) -> Response {
+    match find_index(path) {
         Some((filename, mime_type)) => serve_file(filename, mime_type),
         None => serve_404(),
     }
 }
 
-fn find_index() -> Option<(String, String)> {
+fn find_index(path: String) -> Option<(String, String)> {
     let possible_indexes = vec![
-        (String::from("index.htmd"), String::from("text/htmd")),
-        (String::from("index.txt"), String::from("text/plain")),
-        (String::from("index.html"), String::from("text/html")),
-        (String::from("index.xml"), String::from("text/xml")),
+        (format!(".{path}index.htmd"), String::from("text/htmd")),
+        (format!(".{path}index.txt"), String::from("text/plain")),
+        (format!(".{path}index.html"), String::from("text/html")),
+        (format!(".{path}index.xml"), String::from("text/xml")),
     ];
 
     possible_indexes
