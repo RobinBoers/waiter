@@ -8,10 +8,11 @@ A simple HTTP gridserver built for serving gridsites. It handles caching and mim
 - Serves `.htmd` files as `text/plain` on unsupported browsers
 - Stable and fast
 - Easy to use
+- Supports `PUT` for publishing files
 
 Upcoming:
 
-- Supports `PUT` for publishing files (with auth of course)
+- Require auth for `PUT` requests
 - Fancy URLs for `.htmd` files
 
 ## Usage
