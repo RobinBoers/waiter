@@ -1,5 +1,5 @@
-use rouille::{Request, Response};
-use std::{fs::File, path::Path};
+use rouille::{Request, RequestBody, Response};
+use std::{fs, fs::File, io, io::Read, path::Path};
 
 const SERVER_NAME: &str = "0bx11/waiter (Rust)";
 const CONTENT_LANGUAGE: &str = "en-US";
@@ -25,12 +25,39 @@ fn main() {
     rouille::start_server(args.address, move |request| match request.method() {
         "PUT" => handle_put_request(request),
         "GET" => handle_get_request(request),
-        _ => serve_400(),
+        _ => serve(
+            400,
+            "Bad request; only `GET` and `PUT` requests are supported.",
+        ),
     });
 }
 
-fn handle_put_request(_request: &Request) -> Response {
-    serve_400()
+fn handle_put_request(request: &Request) -> Response {
+    if request.header("Expect") != Some("100-continue") {
+        match request.data() {
+            Some(request_body) => upload_file(request_body, request.url()),
+            _ => serve(400, "Bad request; empty body, nothing to upload."),
+        }
+    } else {
+        serve(
+            400,
+            "Bad request; waiter doesn't support the Expect header.",
+        )
+    }
+}
+
+fn upload_file(mut request_body: RequestBody, filepath: String) -> Response {
+    let mut buffer = String::new();
+
+    match request_body.read_to_string(&mut buffer) {
+        Ok(0) => serve(400, "Bad request; empty body, nothing to upload."),
+        Ok(_len) => {
+            fs::write(format!(".{filepath}"), buffer).expect("Unable to write file");
+
+            serve(201, "")
+        }
+        Err(_) => serve(400, "Bad request; couldn't parse request body."),
+    }
 }
 
 fn handle_get_request(request: &Request) -> Response {
@@ -80,12 +107,11 @@ fn serve_file(filename: String, mime_type: String) -> Response {
 }
 
 fn serve_404() -> Response {
-    Response::text("Resource was not found on this server").with_status_code(404)
+    serve(404, "Resource was not found on this server")
 }
 
-fn serve_400() -> Response {
-    Response::text("Bad request; only `GET` and `PUT` requests are supported.")
-        .with_status_code(400)
+fn serve(status_code: u16, message: &str) -> Response {
+    Response::text(message).with_status_code(status_code)
 }
 
 fn set_cache_time(response: Response, request_url: String) -> Response {
@@ -168,4 +194,3 @@ fn set_additional_headers(response: Response) -> Response {
         .with_unique_header("Server", SERVER_NAME)
         .with_unique_header("Content-Language", CONTENT_LANGUAGE)
 }
-
