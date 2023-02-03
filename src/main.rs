@@ -1,7 +1,7 @@
 use rouille::{Request, RequestBody, Response};
 use std::{fs, fs::File, io::Read, path::Path};
 
-const SERVER_NAME: &str = "0bx11/waiter (Rust)";
+const SERVER_NAME: &str = "philo-systems/waiter (Rust)";
 const CONTENT_LANGUAGE: &str = "en-US";
 const CONTENT_CHARSET: &str = "UTF-8";
 
@@ -75,8 +75,7 @@ fn upload_file(mut request_body: RequestBody, filepath: String) -> Response {
     match request_body.read_to_string(&mut buffer) {
         Ok(0) => serve(400, "Bad request; empty body, nothing to upload."),
         Ok(_len) => {
-            fs::write(format!(".{filepath}"), buffer)
-                .expect(&format!("Unable to write file {filepath}"));
+            fs::write(format!(".{filepath}"), buffer).unwrap_or_else(|_| panic!("Unable to write file {filepath}"));
 
             serve(201, "")
         }
@@ -90,7 +89,7 @@ fn handle_get_request(request: &Request) -> Response {
     if !response.is_success() {
         let url = request.url();
 
-        if url.ends_with("/") {
+        if url.ends_with('/') {
             response = serve_index(url)
         } else {
             response = serve_404()
