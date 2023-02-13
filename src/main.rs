@@ -82,6 +82,7 @@ async fn handle_get_request(request: Req) -> Result<Resp, Infallible> {
 
     set_cache_time(&mut response, url.path());
     set_additional_headers(&mut response);
+    maybe_correct_content_type(&mut response, request);
 
     Ok(response)
 }
@@ -123,4 +124,26 @@ fn set_additional_headers(response: &mut Resp) {
         "Content-Language",
         HeaderValue::from_static(CONTENT_LANGUAGE),
     );
+}
+
+fn maybe_correct_content_type(response: &mut Resp, request: Req) {
+    if serving_htmd_file(response) && !accepts_htmd_mime_type(request) {
+        let headers = response.headers_mut();
+
+        headers.insert(
+            "Content-Type",
+            HeaderValue::from_static("text/plain"),
+        );
+    }
+}
+
+// TODO(robin): make these functions less error-prone.
+
+fn serving_htmd_file(response: &mut Resp) -> bool {
+    response.headers().get("Content-Type").unwrap().to_str().unwrap().contains("text/htmd")
+}
+
+fn accepts_htmd_mime_type(request: Req) -> bool {
+    let accept_header = request.headers().get("Accept").unwrap();
+    accept_header.to_str().unwrap().contains("text/htmd")
 }
