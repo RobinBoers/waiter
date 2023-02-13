@@ -5,8 +5,8 @@ version = "0.0.1"
 edition = "2021"
 authors = ["0b11"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
-rouille = "3.6.1"
+hyper = { version = "1.0.0-rc.2", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+http-body-util = "0.1.0-rc.2" 
