@@ -13,6 +13,7 @@ type Req = Request<hyper::body::Incoming>;
 
 mod auth;
 mod response;
+mod uploads;
 
 const SERVER_NAME: &str = "dupunkto/waiter (Rust)";
 const CONTENT_LANGUAGE: &str = "en-US";
@@ -67,13 +68,9 @@ async fn handle_request(request: Req) -> Result<Resp, Infallible> {
 
 async fn handle_put_request(request: Req) -> Result<Resp, Infallible> {
     match auth::require_authentication(request) {
-        Ok(request) => Ok(process_put_request(request)),
+        Ok(request) => Ok(uploads::process_put_request(request)),
         Err(response) => Ok(response),
     }
-}
-
-fn process_put_request(_request: Req) -> Resp {
-    todo!()
 }
 
 async fn handle_get_request(request: Req) -> Result<Resp, Infallible> {
@@ -130,17 +127,20 @@ fn maybe_correct_content_type(response: &mut Resp, request: Req) {
     if serving_htmd_file(response) && !accepts_htmd_mime_type(request) {
         let headers = response.headers_mut();
 
-        headers.insert(
-            "Content-Type",
-            HeaderValue::from_static("text/plain"),
-        );
+        headers.insert("Content-Type", HeaderValue::from_static("text/plain"));
     }
 }
 
 // TODO(robin): make these functions less error-prone.
 
 fn serving_htmd_file(response: &mut Resp) -> bool {
-    response.headers().get("Content-Type").unwrap().to_str().unwrap().contains("text/htmd")
+    response
+        .headers()
+        .get("Content-Type")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .contains("text/htmd")
 }
 
 fn accepts_htmd_mime_type(request: Req) -> bool {
