@@ -9,4 +9,5 @@ authors = ["0b11"]
 clap = { version = "4.1.1", features = ["derive"] }
 hyper = { version = "1.0.0-rc.2", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
+base64 = "0.13"
 http-body-util = "0.1.0-rc.2" 
