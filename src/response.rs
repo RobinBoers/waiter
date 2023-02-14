@@ -1,4 +1,5 @@
 use crate::config;
+use crate::files;
 pub mod mime;
 
 use std::path::Path;
@@ -63,17 +64,7 @@ fn file_exists(path: &str) -> bool {
 }
 
 async fn serve_path(path: &str) -> Option<Resp> {
-    let scope = Path::new(config::SCOPE).canonicalize().unwrap();
-    let path = Path::new(path).canonicalize();
-
-    let path_buffer = match path {
-        Ok(path_buffer) => path_buffer,
-        Err(_error) => return None,
-    };
-
-    if !path_buffer.starts_with(scope) {
-        return None;
-    }
+    let path_buffer = files::get_path_buffer_for_allowed_path(path)?;
 
     let extension = path_buffer.extension().and_then(|s| s.to_str());
     let mime_type = mime::get_mime_type_by_extension(extension);

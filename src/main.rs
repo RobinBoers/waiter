@@ -15,6 +15,7 @@ mod config;
 mod auth;
 mod response;
 mod uploads;
+mod files;
 
 use clap::Parser;
 
@@ -60,7 +61,7 @@ async fn handle_request(request: Req) -> Result<Resp, Infallible> {
 
 async fn handle_put_request(request: Req) -> Result<Resp, Infallible> {
     match auth::require_authentication(request) {
-        Ok(request) => Ok(uploads::process_put_request(request)),
+        Ok(request) => uploads::process_put_request(request).await,
         Err(response) => Ok(response),
     }
 }
