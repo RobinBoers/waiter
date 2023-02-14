@@ -38,7 +38,7 @@ pub async fn try_files(request: &Req) -> Resp {
 
 async fn try_file(path: &str) -> Option<Resp> {
     let path = find_file(path)?;
-    serve_path(&path).await
+    handle_path(&path).await
 }
 
 async fn try_index(path: &str) -> Option<Resp> {
@@ -63,7 +63,7 @@ fn file_exists(path: &str) -> bool {
     Path::new(path).exists()
 }
 
-async fn serve_path(path: &str) -> Option<Resp> {
+async fn handle_path(path: &str) -> Option<Resp> {
     let path_buffer = files::get_path_buffer_for_allowed_path(path)?;
 
     let extension = path_buffer.extension().and_then(|s| s.to_str());
@@ -78,18 +78,14 @@ async fn serve_path(path: &str) -> Option<Resp> {
 }
 
 async fn serve_file(filename: &str, mime_type: &str) -> Result<Resp, String> {
-    if let Ok(contents) = tokio::fs::read(filename).await {
-        let body: Bytes = contents.into();
-        let charset = config::CONTENT_CHARSET;
+    let body = files::read_file(filename).await?;
+    let charset = config::CONTENT_CHARSET;
 
-        let response = Response::builder()
-            .status(200)
-            .header("Content-Type", format!("{mime_type}; charset={charset}"))
-            .body(Full::new(body))
-            .unwrap();
+    let response = Response::builder()
+        .status(200)
+        .header("Content-Type", format!("{mime_type}; charset={charset}"))
+        .body(Full::new(body))
+        .unwrap();
 
-        return Ok(response);
-    }
-
-    Err(String::from("File not found or couldn't read it"))
+    Ok(response)
 }
