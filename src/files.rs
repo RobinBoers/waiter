@@ -12,7 +12,7 @@ pub async fn read_file(filename: &str) -> Result<Bytes, String> {
         return Ok(body);
     }
 
-    Err(String::from("File not found or couldn't read it."))
+    Err(format!("File {filename} not found or couldn't read it."))
 }
 
 pub async fn write_file(filename: &str, bytes: Bytes) -> Result<(), String> {
@@ -23,7 +23,7 @@ pub async fn write_file(filename: &str, bytes: Bytes) -> Result<(), String> {
 }
 
 pub fn get_path_buffer_for_allowed_path(path: &str) -> Option<PathBuf> {
-    let scope = Path::new(config::SCOPE).canonicalize().unwrap();
+    let scope = Path::new(config::SCOPE).canonicalize().ok()?;
     let path = Path::new(path).canonicalize();
 
     let path_buffer = path.ok()?;

@@ -124,19 +124,26 @@ fn maybe_correct_content_type(response: &mut Resp, request: Req) {
     }
 }
 
-// TODO(robin): make these functions less error-prone.
-
 fn serving_htmd_file(response: &mut Resp) -> bool {
+    let default_header = HeaderValue::from_static("*/*");
+
     response
         .headers()
         .get("Content-Type")
-        .unwrap()
+        .unwrap_or(&default_header)
         .to_str()
-        .unwrap()
+        .expect("Content-Type header in response should be a string!")
         .contains("text/htmd")
 }
 
 fn accepts_htmd_mime_type(request: Req) -> bool {
-    let accept_header = request.headers().get("Accept").unwrap();
-    accept_header.to_str().unwrap().contains("text/htmd")
+    let default_header = HeaderValue::from_static("*/*");
+
+    request
+        .headers()
+        .get("Accept")
+        .unwrap_or(&default_header)
+        .to_str()
+        .expect("Accept header in request should be a string!")
+        .contains("text/htmd")
 }
