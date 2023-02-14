@@ -16,24 +16,11 @@ pub async fn read_file(filename: &str) -> Result<Bytes, String> {
 }
 
 pub async fn write_file(filename: &str, bytes: Bytes) -> Result<(), String> {
-    // let file = open_or_create_file(filename).await?;
-
     let error = format!("An unknown error occured while trying to write {filename}.");
     tokio::fs::write(filename, bytes).await.map_err(|_| error)?;
 
     Ok(())
 }
-
-// async fn open_or_create_file(filename: &str) -> Result<File, String> {
-//     if let Ok(file) = tokio::fs::File::open(filename).await {
-//         Ok(file)
-//     } else {
-//         match tokio::fs::File::create(filename).await {
-//             Ok(file) => Ok(file),
-//             Err(_error) => Err(format!("Couldn't create file {filename}"))
-//         }
-//     }
-// }
 
 pub fn get_path_buffer_for_allowed_path(path: &str) -> Option<PathBuf> {
     let scope = Path::new(config::SCOPE).canonicalize().unwrap();
