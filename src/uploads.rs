@@ -44,8 +44,6 @@ async fn handle_upload(uri: &Uri, bytes: Bytes) -> Result<Resp, Infallible> {
 }
 
 async fn upload_file(path: &str, bytes: Bytes) -> Result<Resp, String> {
-    match files::write_file(path, bytes).await {
-        Ok(()) => Ok(response::serve(201, "")),
-        Err(string) => Err(string)
-    }
+    files::write_file(path, bytes).await?;
+    Ok(response::serve(201, ""))
 }
