@@ -11,18 +11,10 @@ use hyper::{Method, Request, Response};
 type Resp = Response<Full<Bytes>>;
 type Req = Request<hyper::body::Incoming>;
 
+mod config;
 mod auth;
 mod response;
 mod uploads;
-
-const SERVER_NAME: &str = "dupunkto/waiter (Rust)";
-const CONTENT_LANGUAGE: &str = "en-US";
-const CONTENT_CHARSET: &str = "UTF-8";
-
-const CACHE_TIME_ASSETS: u64 = 31536000;
-const CACHE_TIME_CONTENT: u64 = 43200;
-
-const SCOPE: &str = ".";
 
 use clap::Parser;
 
@@ -97,9 +89,9 @@ fn set_cache_time(response: &mut Resp, request_url: &str) {
 
 fn get_cache_time_for_filetype(filename: &str) -> u64 {
     if is_static_asset(filename) {
-        CACHE_TIME_ASSETS
+        config::CACHE_TIME_ASSETS
     } else {
-        CACHE_TIME_CONTENT
+        config::CACHE_TIME_CONTENT
     }
 }
 
@@ -116,10 +108,10 @@ fn is_static_asset(filename: &str) -> bool {
 fn set_additional_headers(response: &mut Resp) {
     let headers = response.headers_mut();
 
-    headers.insert("Server", HeaderValue::from_static(SERVER_NAME));
+    headers.insert("Server", HeaderValue::from_static(config::SERVER_NAME));
     headers.insert(
         "Content-Language",
-        HeaderValue::from_static(CONTENT_LANGUAGE),
+        HeaderValue::from_static(config::CONTENT_LANGUAGE),
     );
 }
 

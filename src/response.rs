@@ -1,3 +1,6 @@
+use crate::config;
+pub mod mime;
+
 use std::path::Path;
 
 use http_body_util::Full;
@@ -6,8 +9,6 @@ use hyper::{Request, Response};
 
 type Resp = Response<Full<Bytes>>;
 type Req = Request<hyper::body::Incoming>;
-
-pub mod mime;
 
 pub fn serve(status_code: u16, message: &str) -> Resp {
     let body = message.to_string().into();
@@ -62,7 +63,7 @@ fn file_exists(path: &str) -> bool {
 }
 
 async fn serve_path(path: &str) -> Option<Resp> {
-    let scope = Path::new(crate::SCOPE).canonicalize().unwrap();
+    let scope = Path::new(config::SCOPE).canonicalize().unwrap();
     let path = Path::new(path).canonicalize();
 
     let path_buffer = match path {
@@ -88,7 +89,7 @@ async fn serve_path(path: &str) -> Option<Resp> {
 async fn serve_file(filename: &str, mime_type: &str) -> Result<Resp, String> {
     if let Ok(contents) = tokio::fs::read(filename).await {
         let body: Bytes = contents.into();
-        let charset = crate::CONTENT_CHARSET;
+        let charset = config::CONTENT_CHARSET;
 
         let response = Response::builder()
             .status(200)

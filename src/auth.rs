@@ -1,8 +1,5 @@
+use crate::config;
 use crate::response;
-
-const REALM: &str = "PUT";
-const AUTH_USERNAME: &str = "root";
-const AUTH_PASSWORD: &str = "toor";
 
 use http_body_util::Full;
 use hyper::body::Bytes;
@@ -24,7 +21,7 @@ pub fn require_authentication(request: Req) -> Result<Req, Resp> {
         None => return Err(serve_auth_required()),
     };
 
-    if auth.username == AUTH_USERNAME && auth.password == AUTH_PASSWORD {
+    if auth.username == config::AUTH_USERNAME && auth.password == config::AUTH_PASSWORD {
         Ok(request)
     } else {
         Err(response::serve(
@@ -89,7 +86,7 @@ fn serve_auth_required() -> Resp {
 
 fn set_www_authenticate_header(response: &mut Resp) {
     let headers = response.headers_mut();
-    let header_value = format!("Basic realm=\"{}\"", REALM);
+    let header_value = format!("Basic realm=\"{}\"", config::AUTH_REALM);
 
     headers.insert(
         "WWW-Authenticate",
