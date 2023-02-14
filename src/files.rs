@@ -3,13 +3,13 @@ use crate::config;
 use std::path::Path;
 use std::path::PathBuf;
 
-use hyper::Uri;
 use hyper::body::Bytes;
+use hyper::Uri;
 
 pub async fn read_file(filename: &str) -> Result<Bytes, String> {
     if let Ok(contents) = tokio::fs::read(filename).await {
         let body: Bytes = contents.into();
-        return Ok(body)
+        return Ok(body);
     }
 
     Err(String::from("File not found or couldn't read it."))
@@ -29,7 +29,7 @@ pub fn get_path_buffer_for_allowed_path(path: &str) -> Option<PathBuf> {
     let path_buffer = path.ok()?;
 
     if !path_buffer.starts_with(scope) {
-        return None
+        return None;
     }
 
     Some(path_buffer)

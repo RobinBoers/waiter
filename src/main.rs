@@ -11,11 +11,11 @@ use hyper::{Method, Request, Response};
 type Resp = Response<Full<Bytes>>;
 type Req = Request<hyper::body::Incoming>;
 
-mod config;
 mod auth;
+mod config;
+mod files;
 mod response;
 mod uploads;
-mod files;
 
 use clap::Parser;
 

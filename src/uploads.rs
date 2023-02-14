@@ -3,9 +3,9 @@ use crate::response;
 
 use std::convert::Infallible;
 
-use http_body_util::{Full, BodyExt};
-use hyper::Uri;
+use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
+use hyper::Uri;
 use hyper::{Request, Response};
 
 type Resp = Response<Full<Bytes>>;
@@ -13,10 +13,13 @@ type Req = Request<hyper::body::Incoming>;
 
 pub async fn process_put_request(request: Req) -> Result<Resp, Infallible> {
     let uri = request.uri().to_owned();
-    
+
     match read_body(request).await {
         Some(bytes) => handle_upload(&uri, bytes).await,
-        None => Ok(response::serve(400, "Bad request; empty body, nothing to upload."))
+        None => Ok(response::serve(
+            400,
+            "Bad request; empty body, nothing to upload.",
+        )),
     }
 }
 
@@ -36,11 +39,17 @@ async fn handle_upload(uri: &Uri, bytes: Bytes) -> Result<Resp, Infallible> {
 
             match upload_file(path, bytes).await {
                 Ok(response) => Ok(response),
-                Err(error) => Ok(response::serve(500, &format!("Internal server error; {error}")))
+                Err(error) => Ok(response::serve(
+                    500,
+                    &format!("Internal server error; {error}"),
+                )),
             }
-        },
-        None => Ok(response::serve(403, "Forbidden; you cannot upload outside of scope."))
-    } 
+        }
+        None => Ok(response::serve(
+            403,
+            "Forbidden; you cannot upload outside of scope.",
+        )),
+    }
 }
 
 async fn upload_file(path: &str, bytes: Bytes) -> Result<Resp, String> {
