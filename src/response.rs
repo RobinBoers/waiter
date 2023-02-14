@@ -47,6 +47,7 @@ async fn try_index(path: &str) -> Option<Resp> {
 
 fn find_file(base_path: &str) -> Option<String> {
     let possible_indexes = vec![
+        format!("{base_path}"),
         format!("{base_path}.htmd"),
         format!("{base_path}.txt"),
         format!("{base_path}.html"),
