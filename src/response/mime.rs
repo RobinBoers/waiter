@@ -1,6 +1,8 @@
-// Stolen from rouille
-// List taken from https://github.com/cybergeek94/mime_guess/blob/master/src/mime_types.rs,
-// itself taken from a dead link.
+// Module stolen from rouille
+// MIT licensed.
+
+// List itself taken from https://github.com/cybergeek94/mime_guess/blob/master/src/mime_types.rs,
+// which in turn is taken from a dead link.
 
 pub fn get_mime_type_by_extension(extension: Option<&str>) -> &'static str {
     match extension {

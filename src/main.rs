@@ -16,6 +16,7 @@ mod config;
 mod files;
 mod response;
 mod uploads;
+mod content_encoding;
 
 use clap::Parser;
 
@@ -72,7 +73,9 @@ async fn handle_get_request(request: Req) -> Result<Resp, Infallible> {
 
     set_cache_time(&mut response, url.path());
     set_additional_headers(&mut response);
-    maybe_correct_content_type(&mut response, request);
+    maybe_correct_content_type(&mut response, &request);
+    
+    content_encoding::apply(&mut response, &request);
 
     Ok(response)
 }
@@ -116,7 +119,7 @@ fn set_additional_headers(response: &mut Resp) {
     );
 }
 
-fn maybe_correct_content_type(response: &mut Resp, request: Req) {
+fn maybe_correct_content_type(response: &mut Resp, request: &Req) {
     if serving_htmd_file(response) && !accepts_htmd_mime_type(request) {
         let headers = response.headers_mut();
 
@@ -136,7 +139,7 @@ fn serving_htmd_file(response: &mut Resp) -> bool {
         .contains("text/htmd")
 }
 
-fn accepts_htmd_mime_type(request: Req) -> bool {
+fn accepts_htmd_mime_type(request: &Req) -> bool {
     let default_header = HeaderValue::from_static("*/*");
 
     request
