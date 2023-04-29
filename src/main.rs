@@ -26,6 +26,10 @@ struct Args {
     /// Address for the server to run on
     #[arg(short, long, default_value_t = String::from("localhost:4000"))]
     address: String,
+
+    /// Disable cache control and content encoding
+    #[arg(short, long, default_value_t = false)]
+    dev: bool
 }
 
 #[tokio::main]
@@ -40,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
         tokio::task::spawn(async move {
             if let Err(err) = http1::Builder::new()
-                .serve_connection(stream, service_fn(handle_request))
+                .serve_connection(stream, service_fn(move |req| handle_request(req, args.dev)))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
@@ -49,10 +53,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     }
 }
 
-async fn handle_request(request: Req) -> Result<Resp, Infallible> {
+async fn handle_request(request: Req, dev_mode: bool) -> Result<Resp, Infallible> {
     match *request.method() {
-        Method::PUT => handle_put_request(request).await,
-        Method::GET => handle_get_request(request).await,
+        Method::PUT => handle_put_request(request, dev_mode).await,
+        Method::GET => handle_get_request(request, dev_mode).await,
         _ => Ok(response::serve(
             400,
             "Bad request; only `GET` and `PUT` requests are supported.",
@@ -60,22 +64,24 @@ async fn handle_request(request: Req) -> Result<Resp, Infallible> {
     }
 }
 
-async fn handle_put_request(request: Req) -> Result<Resp, Infallible> {
+async fn handle_put_request(request: Req, _dev_mode: bool) -> Result<Resp, Infallible> {
     match auth::require_authentication(request) {
         Ok(request) => uploads::process_put_request(request).await,
         Err(response) => Ok(response),
     }
 }
 
-async fn handle_get_request(request: Req) -> Result<Resp, Infallible> {
+async fn handle_get_request(request: Req, dev_mode: bool) -> Result<Resp, Infallible> {
     let mut response = response::try_files(&request).await;
     let url = request.uri();
 
-    set_cache_time(&mut response, url.path());
     set_additional_headers(&mut response);
     maybe_correct_content_type(&mut response, &request);
     
-    content_encoding::apply(&mut response, &request);
+    if !dev_mode {
+        set_cache_time(&mut response, url.path());
+        content_encoding::apply(&mut response, &request);
+    }
 
     Ok(response)
 }

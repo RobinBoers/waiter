@@ -1,6 +1,6 @@
 [package]
 name = "waiter"
-description = "A simple gridserver."
+description = "A simple webserver."
 version = "0.0.1"
 edition = "2021"
 authors = ["0b11"]
