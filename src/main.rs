@@ -24,7 +24,7 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Address for the server to run on
-    #[arg(short, long, default_value_t = String::from("localhost:4000"))]
+    #[arg(short, long, default_value_t = String::from("127.0.0.1:4000"))]
     address: String,
 
     /// Disable cache control and content encoding
