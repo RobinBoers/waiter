@@ -7,7 +7,9 @@ authors = ["0b11"]
 
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
-hyper = { version = "1.0.0-rc.2", features = ["full"] }
+hyper = { version = "1", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
+http-body-util = "0.1"
+hyper-util = { version = "0.1", features = ["full"] }
 base64 = "0.13"
-http-body-util = "0.1.0-rc.2" 
+
