@@ -1,0 +1,13 @@
+#!/bin/bash -eu
+
+build() {
+  cargo build -r
+}
+
+install() {
+  cp -f target/release/waiter ~/bin/waiter
+}
+
+clean() {
+  cargo clean
+}
