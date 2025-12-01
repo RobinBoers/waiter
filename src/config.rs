@@ -8,9 +8,6 @@ pub const CACHE_TIME_ASSETS: u64 = 31536000;
 /// Cache time for content (in seconds)
 pub const CACHE_TIME_CONTENT: u64 = 43200;
 
-/// Directory to serve
-pub const SCOPE: &str = ".";
-
 pub const AUTH_REALM: &str = "PUT";
 pub const AUTH_USERNAME: &str = "root";
 pub const AUTH_PASSWORD: &str = "toor";

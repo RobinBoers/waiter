@@ -24,25 +24,25 @@ pub fn serve_404() -> Resp {
     serve(404, "Resource was not found on this server")
 }
 
-pub async fn try_files(request: &Req) -> Resp {
-    let path = &format!(".{}", request.uri().path());
+pub async fn try_files(request: &Req, directory: &str) -> Resp {
+    let path = &format!("{}{}", directory, request.uri().path());
 
-    if let Some(response) = try_file(path).await {
+    if let Some(response) = try_file(path, directory).await {
         response
-    } else if let Some(response) = try_index(path).await {
+    } else if let Some(response) = try_index(path, directory).await {
         response
     } else {
         serve_404()
     }
 }
 
-async fn try_file(path: &str) -> Option<Resp> {
+async fn try_file(path: &str, directory: &str) -> Option<Resp> {
     let path = find_file(path)?;
-    handle_path(&path).await
+    handle_path(&path, directory).await
 }
 
-async fn try_index(path: &str) -> Option<Resp> {
-    try_file(&format!("{path}/index")).await
+async fn try_index(path: &str, directory: &str) -> Option<Resp> {
+    try_file(&format!("{path}/index"), directory).await
 }
 
 fn find_file(base_path: &str) -> Option<String> {
@@ -64,8 +64,8 @@ fn file_exists(path: &str) -> bool {
     Path::new(path).exists()
 }
 
-async fn handle_path(path: &str) -> Option<Resp> {
-    let path_buffer = files::get_path_buffer_for_allowed_path(path)?;
+async fn handle_path(path: &str, directory: &str) -> Option<Resp> {
+    let path_buffer = files::get_path_buffer_for_allowed_path(path, directory)?;
 
     let extension = path_buffer.extension().and_then(|s| s.to_str());
     let mime_type = mime::get_mime_type_by_extension(extension);

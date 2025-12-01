@@ -20,10 +20,14 @@ mod uploads;
 mod content_encoding;
 
 use clap::Parser;
+use std::sync::Arc;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// Directory to serve (defaults to current directory)
+    directory: Option<String>,
+
     /// Address for the server to run on
     #[arg(short, long, default_value_t = String::from("127.0.0.1:4000"))]
     address: String,
@@ -36,18 +40,22 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let args = Args::parse();
+    let directory = Arc::new(args.directory.unwrap_or_else(|| String::from(".")));
+    let dev_mode = args.dev;
+
     println!("Now listening on {}", args.address);
 
     let listener = TcpListener::bind(args.address).await?;
 
     loop {
         let (stream, _) = listener.accept().await?;
+        let directory = Arc::clone(&directory);
 
         let io = TokioIo::new(stream);
 
         tokio::task::spawn(async move {
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(move |req| handle_request(req, args.dev)))
+                .serve_connection(io, service_fn(move |req| handle_request(req, dev_mode, Arc::clone(&directory))))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
@@ -56,10 +64,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     }
 }
 
-async fn handle_request(request: Req, dev_mode: bool) -> Result<Resp, Infallible> {
+async fn handle_request(request: Req, dev_mode: bool, directory: Arc<String>) -> Result<Resp, Infallible> {
     match *request.method() {
-        Method::PUT => handle_put_request(request, dev_mode).await,
-        Method::GET => handle_get_request(request, dev_mode).await,
+        Method::PUT => handle_put_request(request, &directory).await,
+        Method::GET => handle_get_request(request, dev_mode, &directory).await,
         _ => Ok(response::serve(
             400,
             "Bad request; only `GET` and `PUT` requests are supported.",
@@ -67,15 +75,15 @@ async fn handle_request(request: Req, dev_mode: bool) -> Result<Resp, Infallible
     }
 }
 
-async fn handle_put_request(request: Req, _dev_mode: bool) -> Result<Resp, Infallible> {
+async fn handle_put_request(request: Req, directory: &str) -> Result<Resp, Infallible> {
     match auth::require_authentication(request) {
-        Ok(request) => uploads::process_put_request(request).await,
+        Ok(request) => uploads::process_put_request(request, directory).await,
         Err(response) => Ok(response),
     }
 }
 
-async fn handle_get_request(request: Req, dev_mode: bool) -> Result<Resp, Infallible> {
-    let mut response = response::try_files(&request).await;
+async fn handle_get_request(request: Req, dev_mode: bool, directory: &str) -> Result<Resp, Infallible> {
+    let mut response = response::try_files(&request, directory).await;
     let url = request.uri();
 
     set_additional_headers(&mut response);

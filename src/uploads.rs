@@ -11,11 +11,11 @@ use hyper::{Request, Response};
 type Resp = Response<Full<Bytes>>;
 type Req = Request<hyper::body::Incoming>;
 
-pub async fn process_put_request(request: Req) -> Result<Resp, Infallible> {
+pub async fn process_put_request(request: Req, directory: &str) -> Result<Resp, Infallible> {
     let uri = request.uri().to_owned();
 
     match read_body(request).await {
-        Some(bytes) => handle_upload(&uri, bytes).await,
+        Some(bytes) => handle_upload(&uri, bytes, directory).await,
         None => Ok(response::serve(
             400,
             "Bad request; empty body, nothing to upload.",
@@ -30,10 +30,10 @@ async fn read_body(request: Req) -> Option<Bytes> {
     Some(collected_body.to_bytes())
 }
 
-async fn handle_upload(uri: &Uri, bytes: Bytes) -> Result<Resp, Infallible> {
-    let path = &files::uri_to_local_path(uri);
+async fn handle_upload(uri: &Uri, bytes: Bytes, directory: &str) -> Result<Resp, Infallible> {
+    let path = &files::uri_to_local_path(uri, directory);
 
-    match files::get_path_buffer_for_allowed_path(path) {
+    match files::get_path_buffer_for_allowed_path(path, directory) {
         Some(path_buffer) => {
             let path = path_buffer.to_str().unwrap();
 

@@ -1,5 +1,3 @@
-use crate::config;
-
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -22,8 +20,8 @@ pub async fn write_file(filename: &str, bytes: Bytes) -> Result<(), String> {
     Ok(())
 }
 
-pub fn get_path_buffer_for_allowed_path(path: &str) -> Option<PathBuf> {
-    let scope = Path::new(config::SCOPE).canonicalize().ok()?;
+pub fn get_path_buffer_for_allowed_path(path: &str, scope: &str) -> Option<PathBuf> {
+    let scope = Path::new(scope).canonicalize().ok()?;
     let path = Path::new(path).canonicalize();
 
     let path_buffer = path.ok()?;
@@ -35,6 +33,6 @@ pub fn get_path_buffer_for_allowed_path(path: &str) -> Option<PathBuf> {
     Some(path_buffer)
 }
 
-pub fn uri_to_local_path(uri: &Uri) -> String {
-    format!(".{}", uri.path())
+pub fn uri_to_local_path(uri: &Uri, directory: &str) -> String {
+    format!("{}{}", directory, uri.path())
 }
