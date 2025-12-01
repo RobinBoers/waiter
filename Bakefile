@@ -1,11 +1,15 @@
-#!/bin/bash -eu
+#!/bin/bash
 
 build() {
-  cargo build -r
+  cargo build --release
 }
 
 install() {
-  cp -f target/release/waiter ~/bin/waiter
+  mv target/release/waiter ${XDG_BINARY_HOME:-$HOME/.local/bin}/
+}
+
+reinstall() {
+  build && install
 }
 
 clean() {
