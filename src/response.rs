@@ -61,7 +61,7 @@ fn find_file(base_path: &str) -> Option<String> {
 }
 
 fn file_exists(path: &str) -> bool {
-    Path::new(path).exists()
+    Path::new(path).is_file()
 }
 
 async fn handle_path(path: &str, directory: &str) -> Option<Resp> {
