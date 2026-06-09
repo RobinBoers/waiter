@@ -209,6 +209,7 @@ pub fn get_mime_type_by_extension(extension: Option<&str>) -> &'static str {
         Some("jpeg") => "image/jpeg",
         Some("jpg") => "image/jpeg",
         Some("js") => "application/javascript",
+        Some("mjs") => "application/javascript",
         Some("json") => "application/json",
         Some("jsx") => "text/jscript; charset=utf8",
         Some("jsxbin") => "text/plain; charset=utf8",
