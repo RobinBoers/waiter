@@ -29,8 +29,12 @@ struct Args {
     directory: Option<String>,
 
     /// Address for the server to run on
-    #[arg(short, long, default_value_t = String::from("127.0.0.1:4000"))]
+    #[arg(short, long, default_value_t = String::from("127.0.0.1"))]
     address: String,
+
+    /// Port for the server to run on
+    #[arg(short, long, default_value_t = 4000)]
+    port: u16,
 
     /// Disable cache control and content encoding
     #[arg(short, long, default_value_t = false)]
@@ -43,9 +47,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let directory = Arc::new(args.directory.unwrap_or_else(|| String::from(".")));
     let dev_mode = args.dev;
 
-    println!("Now listening on {}", args.address);
+    println!("Now listening on {}:{}", args.address, args.port);
 
-    let listener = TcpListener::bind(args.address).await?;
+    let listener = TcpListener::bind((args.address, args.port)).await?;
 
     loop {
         let (stream, _) = listener.accept().await?;
